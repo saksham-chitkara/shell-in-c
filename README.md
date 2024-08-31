@@ -47,10 +47,11 @@ it will check old pwd which will be ~
 
 * Files: proclore.c and proclore.h
 * Units of virtual memory size is bytes
-* Some processes for which executable path cant be obtained, for them only error will be shown. No required info. would be printed.
+* Some processes for which executable path cant be obtained, for them only path wont be printed. Rest info will be printed.
 
 ### Spec8 :
 
 * Files: seek.c and seek.h
 * for Q9: " seek file_name - " will search in the old pwd
 * Assumed maximum matches of file/directory name to be 4096
+* Assumed that we have to not search in hidden folders

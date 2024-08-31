@@ -1,7 +1,7 @@
 #include "headers.h"
 
 void proclore(char* cmd){
-    
+
     int arg_cnt = 0;
     int pid_given;
 
@@ -25,7 +25,7 @@ void proclore(char* cmd){
 
     FILE *status_file = fopen(status_file_path, "r");
     if(!status_file){
-        printf("Please enter the correct pid\n");
+        printf("\033[31mPlease enter the correct pid\033[0m\n");
         return;
     }
 
@@ -54,13 +54,14 @@ void proclore(char* cmd){
 
     else{
         printf("\033[31mCouldn't find the executable file\033[0m\n");
-        return;
+        // return;
     }
 
     printf("pid : %d\n", pid);
     if(pgrp == tgpid){
         // printf("process status : %s+\n", state); //for foreground
-        printf("process status : %c+\n", state); //for foreground
+        if(state == 'Z') printf("process status : %c\n", state);
+        else printf("process status : %c+\n", state); //for foreground
     }
     else{
         // printf("process status : %s\n", state);
