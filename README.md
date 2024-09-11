@@ -36,7 +36,7 @@ it will check old pwd which will be ~
 ### Spec6 :
 
 * Files: bgfg.c and bgfg.h
-* I am only checking if the LATEST foreground process is taking more than 2 seconds for execution or not
+* I am only checking if the LATEST foreground process(of built-in commands) is taking more than 2 seconds for execution or not
 * for Q5 : if sleep 3; sleep 5 the latest foreground process is sleep 5 and i will only consider that and print sleep 5 in next prompt
 * for Q6 : for erroneous commands (background) also pid and the message of completion is printed
 * for Q14 : as it is mentioned that it wont be tested so i am not handling this case
@@ -55,3 +55,21 @@ it will check old pwd which will be ~
 * for Q9: " seek file_name - " will search in the old pwd
 * Assumed maximum matches of file/directory name to be 4096
 * Assumed that we have to not search in hidden folders
+
+
+### Spec13 : 
+* readme mein likhde ki pure pipe ko bg krunga aur termination msg mein phle command ka naam ayga
+
+echo "Hello World" > file.txt & | wc 
+isme phla to execute hora usse bhi roku kya?
+
+
+### Spec16 :
+* Files: neonate.c and neonate.h
+* Assumption : When neonate -n t(seconds) is given as a command, the first print will happen after t seconds.
+
+
+
+
+
+

@@ -139,12 +139,14 @@ void hop(char* args){
             printf("%s\n\n", cwd);
             i++;
             strcpy(prev_dir, tmp);
+            
        }
     }
 
     for(int i = 0; i < 1000; i++){
         free(single[i]);
     }
+
     free(tmp);
 
 }

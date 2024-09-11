@@ -1,10 +1,14 @@
 #include "headers.h"
-#define size 10000001
+#define size 100001
 
 hm* obj = NULL;
+int fg_pid = -1;
+char* fg_name = NULL;
 bool last_fg_more_than_2 = false;
 int last_time;
 char lastfg[256];
+char fg_pname[256];
+char fg_cmdname[256];
 
 hm* hmCreate(){
     hm* new = (hm*)malloc(sizeof (hm));
@@ -21,10 +25,11 @@ int hashindex(int key){
     return key % size;
 }
 
-void hmInsert(hm* obj, int num, char* name){
+void hmInsert(hm* obj, int num, char* name, char* cname){
     node* new = (node*)malloc(sizeof(node));
     new->pid = num;
     strcpy(new->pname, name);
+    strcpy(new->cmd_name, cname);
 
     int hashindx = hashindex(num);
 
@@ -57,8 +62,21 @@ void hmdelete(hm* obj, int num, char* name){
     free(curr);
 }
 
+bool hmfind(int pid_given){
+    int indx = hashindex(pid_given);
+    node* curr = obj->pNext[indx];
 
-void execute(char *cmd, int bg){
+    while(curr != NULL){
+        if(curr->pid == pid_given) return true;
+        curr = curr -> next;
+    }
+    
+    return false;
+}
+
+
+void execute(char *cmd, int bground){
+    // printf("in execute %s\n", cmd);
     //cmd mein & nhi hai
 
     struct timeval start, end;
@@ -73,13 +91,70 @@ void execute(char *cmd, int bg){
         }
     }
 
-    char *token = strtok(cmd, " \t");
-    int i = 0;
-    while(token != NULL){
-        strcpy(args[i++], token);
-        token = strtok(NULL, " \t");
+    
+    // char *token = strtok(cmd, " \t");
+    // int i = 0;
+    // while(token != NULL){
+    //     strcpy(args[i++], token);
+    //     token = strtok(NULL, " \t");
+    // }
+    // args[i] = NULL;
+
+    //
+    //
+    //
+    // changed for "" 
+    //
+    //
+
+    while(*cmd == ' ' || *cmd == '\t') cmd++;
+    char *ending = cmd + strlen(cmd) - 1;
+    while(ending > cmd && *ending == ' '){
+        ending--;
     }
-    args[i] = NULL;
+    *(ending + 1) = '\0';
+
+    char orig[4096];
+    strcpy(orig, cmd);
+    
+    int i = 0;
+    int len = strlen(cmd);
+    bool consider = true;
+    int token_cnt = 0;
+    int j = 0;
+
+    //sed mein error ara kyuki quotes mein space ko delimitor manra
+    //isliye ab yeh krna pdega
+
+    while(i < len){
+        if(cmd[i] == '\'' || cmd[i] == '"') consider = !consider;
+
+        if((cmd[i + 1] == '\0' || cmd[i] == ' ') && consider){
+            if(cmd[i + 1] == '\0'){
+                i++;
+                cmd[i] = '\0';
+            }
+
+            else cmd[i] = '\0';
+        
+            char* next = cmd + j;
+
+            //remove quotes from ends
+            if(next[0] == '\'' && next[strlen(next) - 1] == '\'' || next[0] == '"' && next[strlen(next) - 1] == '"'){
+                next[strlen(next) - 1] = '\0';
+                next++;
+            }
+
+            // printf("%s..\n", next);
+            if(strlen(next))    
+                args[token_cnt++] = next;
+
+            j = i + 1;
+        }
+        i++;
+    }
+   
+    args[token_cnt] = NULL;
 
     char pname[256];
     strcpy(pname, args[0]);
@@ -94,30 +169,133 @@ void execute(char *cmd, int bg){
 
     else if(pid == 0){   //jo execute krna child mein krna
 
-        int res = execvp(args[0], args);
-        for(int i = 0; i < 1024; i++){
-            free(args[i]);
+        if(strstr(orig, "|")){
+            handle_pipes(orig);
         }
+
+        else if(strncmp("bg", orig, 2) == 0  && (orig[2] == '\0' || orig[2] == ' ' || orig[2] == '\t')){
+            bg(orig);
+        }
+
+        else if(strncmp("fg", orig, 2) == 0  && (orig[2] == '\0' || orig[2] == ' ' || orig[2] == '\t')){
+            fg(orig);
+        }
+
+        else if(strstr(orig, ">") || strstr(orig, ">>") || strstr(orig, "<")){
+            redirect(orig, false, -1, -1);
+        }
+
+        else if(myshrc_func(strdup(orig))){
+
+        }
+
+        else if(strncmp("neonate", orig, 7) == 0  && (orig[7] == '\0' || orig[7] == ' ' || orig[7] == '\t')){
+            neonate(orig);
+        }
+
+        else if(strncmp("iMan", orig, 4) == 0  && (orig[4] == '\0' || orig[4] == ' ' || orig[4] == '\t')){
+            man(orig);
+        }
+
+        else if(strncmp("hop", orig, 3) == 0  && (orig[3] == '\0' || orig[3] == ' ' || orig[3] == '\t')){
+            hop(orig);
+
+        } 
         
-        if(res < 0){
-            printf("\033[31mERROR: '%s' is not a valid command!\033[0m\n", pname);
-            // error = true;
-            exit(1);
+        else if(strncmp("seek", orig, 4) == 0 && (orig[4] == '\0' || orig[4] == ' ' || orig[4] == '\t')){
+            find(orig);
+        } 
+        
+        else if(strncmp("proclore", orig, 8) == 0 && (orig[8] == '\0' || orig[8] == ' ' || orig[8] == '\t')){
+            proclore(orig);
+        } 
+        
+        else if(strcmp("log purge", orig) == 0){
+            purge();
+        } 
+        
+        else if(strncmp("log execute", orig, 11) == 0 && (orig[11] == '\0' || orig[11] == ' ' || orig[11] == '\t')){
+            int index = -1;
+
+            char* sub_token;
+            char* saveptr3;
+            sub_token = strtok_r(orig, " \t", &saveptr3);
+
+            int args = 0;
+            while(sub_token != NULL){
+                args++;
+                if(args == 3){
+                    index = atoi(sub_token);
+                }
+
+                sub_token = strtok_r(NULL, " \t", &saveptr3);
+            }
+            exec(index);
+        } 
+        
+        else if(strcmp("log", orig) == 0){
+            get_all();
+        } 
+        
+        else if(strncmp("reveal", orig, 6) == 0 && (orig[6] == '\0' || orig[6] == ' ' || orig[6] == '\t')){
+            reveal(orig);
+        } 
+
+        else if(strncmp("ping", orig, 4) == 0 && (orig[4] == '\0' || orig[4] == ' ' || orig[4] == '\t')){
+            ping(orig);
+        } 
+
+        else if(strcmp("activities", orig) == 0){
+            activities();
         }
+
+        //
+        //
+        //
+        //
+        // iske upr ka add kra h
+        //
+        //
+        //
+        else{
+            printf("%s..\n", args[0]);
+            int res = execvp(args[0], args);
+            // for(int i = 0; i < 1024; i++){
+            //     free(args[i]);
+            // }
+            
+            if(res < 0){
+                printf("...\n");
+                printf("\033[31mERROR: '%s' is not a valid command!\033[0m\n", pname);
+                // error = true;
+                exit(1);
+            }
+        }
+
+        exit(0);
     } 
 
     else if(pid > 0){  
         // if(error) return;
 
-        if(bg){
+        if(bground){
             printf("%d\n", pid); 
-            hmInsert(obj, pid, pname);
+            hmInsert(obj, pid, pname, orig);
         } 
 
         else{
+            fg_pid = getpid();
+            fg_name = args[0];
+            // printf("fgpid %d\n", fg_pid);
+            strcpy(fg_cmdname, orig);
+            strcpy(fg_pname, pname);
+
             gettimeofday(&start, NULL);
             int status;
             waitpid(pid, &status, 0);
+            // fg_name = NULL;
+            // printf("%d exited\n", fg_pid);
+            
             gettimeofday(&end, NULL);
 
             // time taken
@@ -135,6 +313,8 @@ void execute(char *cmd, int bg){
             else{
                 last_fg_more_than_2 = false;
             }
+
+            // fg_pid = -1;
         }
     } 
 }
@@ -158,9 +338,14 @@ void sigchld_handler(int signum){
     int pid;
 
     while((pid = waitpid(-1, &status, WNOHANG)) > 0){
-        char pname[256];
+        char *pname = NULL;
         hmdelete(obj, pid, pname);
 
+        if(!pname){
+            pname = fg_name;
+        }
+
+        // printf("%s\n", fg_name);
         if(WIFEXITED(status)){
             printf("%s exited normally (%d)\n", pname, pid);
         } 

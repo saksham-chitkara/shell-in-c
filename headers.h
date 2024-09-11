@@ -18,6 +18,11 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
+#include <termios.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include "prompt.h"
 #include "hop.h"
@@ -27,6 +32,15 @@
 #include "seek.h"
 #include "bgfg.h"
 #include "input.h"
+
+#include "alias.h"
+#include "activities.h"
+#include "ping.h"
+#include "redirection.h"
+#include "pipe.h"
+#include "neonate.h"
+#include "iman.h"
+#include "bg.h"
 
 #endif
 

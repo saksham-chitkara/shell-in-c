@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -lm
 
 # Source files
-SRCS = main.c prompt.c hop.c log.c proclore.c seek.c reveal.c bgfg.c input.c
+SRCS = main.c prompt.c hop.c log.c proclore.c seek.c reveal.c bgfg.c input.c alias.c activities.c ping.c redirection.c pipe.c neonate.c iman.c bg.c
 
 # Object files
 OBJS = $(SRCS:.c=.o)

@@ -8,7 +8,16 @@ char* content[1024];
 
 void init(){
     gethostname(sys_name, sizeof(sys_name));
-    getlogin_r(user_name, sizeof(user_name));
+    // getlogin_r(user_name, sizeof(user_name));
+
+    int uid = getuid();
+    struct passwd *pw = getpwuid(uid);
+    if(pw == NULL){
+        perror("getpwuid");
+        return;
+    }
+    
+    strcpy(user_name, pw->pw_name);
     getcwd(home, sizeof(home));
     getcwd(cwd, sizeof(cwd));
 
@@ -17,6 +26,7 @@ void init(){
     }
 
     obj = hmCreate();
+    load_myshrc();
 }
 
 void print_red(const char* text) {

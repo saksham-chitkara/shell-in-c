@@ -3,6 +3,7 @@
 int main(){
     init();
     setup_sigchld_handler();
+    kb_signal_handlers();
     
     while(1){
         prompt();
@@ -12,6 +13,10 @@ int main(){
         // scanf("%c", &c);
 
         if(fgets(command, sizeof(command), stdin) == NULL){
+        //     // printf("%d\n", fg_pid);
+        //     kill(SIGKILL, fg_pid);
+        //     printf("Logging out of shell\n");
+        //     break;
             continue;
         }
 

@@ -1,3 +1,52 @@
 a.out
 *.o
 log.txt
+
+class segment_tree{
+    public:
+        vector<int> seg_tree;
+
+        segment_tree(int n){
+            seg_tree = vi(4 * n, 0);
+        }
+
+        void build(int indx, int l, int r, vi &v){
+            if(l == r){
+                seg_tree[indx] = v[l];
+                return; 
+            }
+
+            int mid = l + (r - l) / 2;
+            build(2 * indx + 1, l, mid, v);
+            build(2 * indx + 2, mid + 1, r, v);
+
+            seg_tree[indx] = seg_tree[2 * indx + 1] + seg_tree[2 * indx + 2];
+            return;
+        }
+
+        void update(int indx, int l, int r, int to_be_set, int val, vi &v){
+            if(l == r){
+                seg_tree[indx] = val;
+                return;
+            }
+
+            int mid = l + (r - l) / 2;
+            if(to_be_set <= mid)
+                update(2 * indx + 1, l, mid, to_be_set, val, v);
+            else
+                update(2 * indx + 2, mid + 1, r, to_be_set, val, v);
+
+            seg_tree[indx] = seg_tree[2 * indx + 1] + seg_tree[2 * indx + 2];
+
+            return;
+        }
+
+        int query(int indx, int l, int r, int lx, int rx){
+            if(r < lx || l > rx) return 0;
+            if(l >= lx && r <= rx) return seg_tree[indx];
+
+            int mid = l + (r - l) / 2;
+            return query(2 * indx + 1, l, mid, lx, rx) + query(2 * indx + 2, mid + 1, r, lx, rx);
+        }
+        
+};
