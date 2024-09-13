@@ -76,7 +76,6 @@ bool hmfind(int pid_given){
 
 
 void execute(char *cmd, int bground){
-    // printf("in execute %s %d\n", cmd, bground);
     //cmd mein & nhi hai
 
     struct timeval start, end;
