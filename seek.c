@@ -265,7 +265,9 @@ void find(char* cmd){
                 }
                 else{
                     strcpy(prev_dir, cwd);
+                    write_dir_to_file(prev_dir, "pwd.txt");
                     strcpy(cwd, found_dir[0]);  
+                    write_dir_to_file(cwd, "cwd.txt");
                 }
             }
             

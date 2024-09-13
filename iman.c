@@ -26,7 +26,7 @@ void man(char *cmd){
     }
 
     if(target == NULL){
-        printf("Provide the target name!\n");
+        printf("\033[31mProvide the target name!\033[0m\n");
         return;
     }
 
@@ -37,12 +37,12 @@ void man(char *cmd){
 
     server = gethostbyname("man.he.net"); //DNS k liye
     if(server == NULL){
-        fprintf(stderr, "Error: Could not resolve the hostname.\n");
-        exit(1);
+        printf("\033[31mError: Could not resolve the hostname!\033[0m\n");
+        return;
     }
 
     if((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){ //socket bnana
-        perror("Error creating socket");
+        printf("\033[31mError creating socket!\033[0m\n");
         return;
     }
 
@@ -53,7 +53,7 @@ void man(char *cmd){
     memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length);
 
     if(connect(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){ // to connect to server
-        perror("Error connecting to server");
+        printf("\033[31mError connecting to server!\033[0m\n");
         return;
     }
 
@@ -63,7 +63,7 @@ void man(char *cmd){
 
     // Sending the GET request to the server
     if(write(socket_fd, request, strlen(request)) < 0){
-        perror("Error sending request to server");
+        printf("\033[31mError sending request to server!\033[0m\n");
         return;
     }
 
@@ -74,15 +74,21 @@ void man(char *cmd){
     while((bytes = read(socket_fd, res, sizeof(res) - 1)) > 0){
         res[bytes] = '\0';
 
+        char *header = strstr(res, "\n\n");
+        if(header){
+            rem_tags(header + 2);
+        }
+        else{
+            rem_tags(res);
+        }
+
         if(strstr(res, "No matches") != NULL){
             not_found = 1;
         }
-
-        rem_tags(res);
     }
 
     if(bytes < 0){
-        perror("Error reading res from server");
+        printf("\033[31mError reading res from server!\033[0m\n");
         return;
     }
 

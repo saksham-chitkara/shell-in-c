@@ -11,14 +11,14 @@ void bg(char* cmd){
     }
 
     if(arg_cnt != 2){
-        printf("Provide valid arguements\n");
+        printf("\033[31mProvide valid arguements!\033[0m\n");
         return;
     }
 
     int pid = atoi(args[1]);
 
     if(pid < 0){
-        printf("Enter a valid pid!\n");
+        printf("\033[31mEnter a valid pid!\033[0m\n");
         return;
     }
 
@@ -35,12 +35,12 @@ void bg(char* cmd){
     snprintf(proc_path, sizeof(proc_path), "/proc/%d", pid);
 
     if(stat(proc_path, &st) == -1){
-        printf("No such process found\n");
+        printf("\033[31mNo such process found!\033[0m\n");
         return;
     }
 
     if(kill(pid, SIGCONT) < 0){
-        perror("bg");
+        printf("\033[31mCouldn't send the signal to continue!\033[0m\n");
     }
 
     return;
@@ -57,14 +57,14 @@ void fg(char* cmd){
     }
 
     if(arg_cnt != 2){
-        printf("Provide valid arguements\n");
+        printf("\033[31mProvide valid arguements!\033[0m\n");
         return;
     }
 
     int pid = atoi(args[1]);
 
     if(pid < 0){
-        printf("Enter a valid pid!\n");
+        printf("\033[31mEnter a valid pid!\033[0m\n");
         return;
     }
 
@@ -79,7 +79,7 @@ void fg(char* cmd){
     snprintf(proc_path, sizeof(proc_path), "/proc/%d", pid);
 
     if(stat(proc_path, &st) == -1){
-        printf("No such process found\n");
+        printf("\033[31mNo such process found!\033[0m\n");
         return;
     }
 
@@ -104,30 +104,43 @@ void fg(char* cmd){
     tcsetpgrp(0, pgid);
 
     if(kill(pid, SIGCONT) < 0){ //stop h to run kradenge
-        printf("Error in kill command!\n");
+        printf("\033[31mCouldn't send the signal to continue!\033[0m\n");
         return;
     }
 
     int status;
     // printf("waiting\n");
-    int res = waitpid(pid, &status, WUNTRACED); //stop hua to bhi return krdega WUNTRACED isliye lgaya
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    int res = waitpid(pid, &status, WUNTRACED);  // stop hua to bhi return krdega WUNTRACED isliye lgaya
     if(res == -1){
-        perror("waitpid");
+        printf("\033[31mError in waitpid!\033[0m\n");
         return;
     }
 
-    // printf("done\n");
+    gettimeofday(&end, NULL);
 
-    // printf("Process %d exited with status %d\n", pid, status);
-    // if(WIFEXITED(status)){
-    //     printf("Process %d exited normally with exit status %d\n", pid, WEXITSTATUS(status));
-    // } 
-    // else if(WIFSIGNALED(status)){
-    //     printf("Process %d was killed by signal %d\n", pid, WTERMSIG(status));
-    // } 
-    // else if(WIFSTOPPED(status)){
-    //     printf("Process %d was stopped by signal %d\n", pid, WSTOPSIG(status));
-    // }
+    // time taken
+    long long int seconds = end.tv_sec - start.tv_sec;
+    long long int microseconds = end.tv_usec - start.tv_usec;
+    double elapsed = seconds + microseconds * 1e-6;
+    int time = round(elapsed);
+
+
+    if(elapsed > 2.0){
+        last_fg_more_than_2 = true;
+        strcpy(lastfg, args[0]);
+        last_time = time;
+    }
+
+    else{
+        last_fg_more_than_2 = false;
+    }
+
+    // aise hi time dkhra tha
+
+    // printf("done\n");
 
     tcsetpgrp(0, getpgid(0)); // to return terminal control back to shell
     signal(SIGTTIN, SIG_DFL); //restore krdiye dono signal

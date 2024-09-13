@@ -3,8 +3,8 @@
 int get_latest_pid(){
     DIR *proc_dir = opendir("/proc");
     if(proc_dir == NULL){
-        perror("Failed to open /proc");
-        exit(1);
+        printf("\033[31mFailed to open /proc!\033[0m\n");
+        return -1;
     }
 
     struct dirent *entry;
@@ -12,7 +12,7 @@ int get_latest_pid(){
 
     while((entry = readdir(proc_dir)) != NULL){
         if(entry->d_type == DT_DIR){
-            // Check if the directory name is numeric (indicating a process ID)
+
             int pid = atoi(entry->d_name);
             if(pid > latest_pid){
                 latest_pid = pid;
@@ -24,7 +24,8 @@ int get_latest_pid(){
     return latest_pid;
 }
 
-struct termios terminal;
+static struct termios terminal;
+
 void enable_raw_mode(){
     tcgetattr(STDIN_FILENO, &terminal);
     struct termios raw = terminal;
@@ -44,6 +45,7 @@ void neonate(char* cmd){
     int arg_cnt = 0;
     char* args[3];
     bool error = false;
+    atexit(disable_raw_mode);
 
     char* token = strtok(cmd, " \t");
     while(token != NULL){
@@ -56,47 +58,69 @@ void neonate(char* cmd){
     }
 
     if(error | arg_cnt < 3 | strcmp(args[1], "-n") != 0){
-        printf("Invalid command!\n");
+        printf("\033[31mInvalid command!\033[0m\n");
         return;
     }
 
     int interval = atoi(args[2]);
-    enable_raw_mode();
-
+    
     int flags = fcntl(STDIN_FILENO, F_GETFL, 0); //save krra flags baad mein restore k liye
     if(flags == -1){
-        perror("fcntl(F_GETFL)");
-        exit(1);
+        printf("\033[31mfcntl(F_GETFL)!\033[0m\n");
+        return;
     }
     
     // Set to non-blocking mode
     if(fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1){
-        perror("fcntl(F_SETFL, O_NONBLOCK)");
-        exit(1);
+        printf("\033[31mfcntl(F_SETFL, O_NONBLOCK)\033[0m\n");
+        return;
     }
 
-    char c;
-    int latest_pid = -1;
+    // int pid = fork();
 
-    int check_interval = 100000; // 100ms in microseconds
-    int total_time = 0;          // To accumulate time slept
-    int sleep_microseconds = interval * 1000000; // Convert sleep interval to microseconds
+    // if(pid < 0){
+    //     perror("fork");
+    //     exit(1);
+    // }
 
-    while(1){
-        if(read(STDIN_FILENO, &c, 1) == 1 && c == 'x') {
-            break;  // Exit the loop if 'x' is pressed
+    // else if(pid == 0){
+        char c;
+        int latest_pid = -1;
+
+        int check_interval = 100000; 
+        int total_time = 0;          
+        int sleep_microseconds = interval * 1000000; 
+
+        latest_pid = get_latest_pid();
+        printf("%d\n", latest_pid);
+
+        while(1){
+            if(read(STDIN_FILENO, &c, 1) == 1 && c == 'x') {
+                break;  // Exit the loop if 'x' is pressed
+            }
+
+            if(total_time >= sleep_microseconds){
+                latest_pid = get_latest_pid();
+                printf("%d\n", latest_pid);
+                total_time = 0; 
+            }
+
+            usleep(check_interval); 
+            total_time += check_interval; 
         }
 
-        if(total_time >= sleep_microseconds){
-            latest_pid = get_latest_pid();
-            printf("%d\n", latest_pid);
-            total_time = 0; // Reset time after printing
-        }
+        // exit(0);
+    // }
 
-        usleep(check_interval); // Sleep for 100ms (or any short interval)
-        total_time += check_interval; // Accumulate the time slept
-    }
+    // else{
+    //     fg_pid = pid;
+    //     fg_name = "neonate";
+    //     int status;
+    //     waitpid(pid, &status, 0);
+    // }
 
+
+    // isme x k baad wait krna pdra tha
     // while(1){
     //     if(read(STDIN_FILENO, &c, 1) == 1 && c == 'x'){
     //         break;  // Exit the loop if 'x' is pressed
@@ -109,7 +133,7 @@ void neonate(char* cmd){
     // }
 
     if(fcntl(STDIN_FILENO, F_SETFL, flags) == -1){
-        perror("fcntl(F_SETFL, blocking)");
+        printf("\033[31mfcntl(F_SETFL, blocking)\033[0m\n");
         exit(1);
     }
 

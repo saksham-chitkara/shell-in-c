@@ -9,7 +9,7 @@ int func_count = 0;
 void load_myshrc(){
     FILE *file = fopen(".myshrc", "r");
     if(!file){
-        printf("No .myshrc file found.\n");
+        printf("\033[31mNo .myshrc file found!\033[0m\n");
         return;
     }
 
@@ -28,9 +28,39 @@ void load_myshrc(){
         //alias ka
         if(strncmp(line, "alias ", 6) == 0){
             char *name = strtok(line + 6, "=");
-            char *command = strtok(NULL, "\n");
+            while(*name == ' ') name++;
+            char* end = name + strlen(name) - 1;
+            while (end > name && *end == ' ') end--; 
+            *(end + 1) = '\0';
 
-            if (name && command) {
+            char *command = strtok(NULL, "\n");
+            while(*command == ' ') command++;
+            end = command + strlen(command) - 1;
+            while(end > command && *end == ' ' ) end--;
+            *(end + 1) = '\0';
+
+            if(name && command){
+                aliases[alias_count].name = strdup(name);
+                aliases[alias_count].command = strdup(command);
+                alias_count++;
+            }
+        }
+        
+        // alias defined without keyword
+        else if(strstr(line, "=")){
+            char *name = strtok(line, "=");
+            while(*name == ' ') name++;
+            char* end = name + strlen(name) - 1;
+            while (end > name && *end == ' ') end--; 
+            *(end + 1) = '\0';
+
+            char *command = strtok(NULL, "\n");
+            while(*command == ' ') command++;
+            end = command + strlen(command) - 1;
+            while(end > command && *end == ' ' ) end--;
+            *(end + 1) = '\0';
+
+            if(name && command){
                 aliases[alias_count].name = strdup(name);
                 aliases[alias_count].command = strdup(command);
                 alias_count++;
@@ -40,7 +70,7 @@ void load_myshrc(){
         // func
         else if(strchr(line, '{')){
             char *name = strtok(line, " \t");
-            if (name){
+            if(name){
                 funct[func_count].name = strdup(name);
                 funct[func_count].command_count = 0;
 
@@ -51,7 +81,7 @@ void load_myshrc(){
 
                 while(fgets(line, sizeof(line), file) && !strchr(line, '}')){
                     comment_pos = strchr(line, '#');
-                    if (comment_pos){
+                    if(comment_pos){
                         *comment_pos = '\0';
                     }
 
@@ -126,7 +156,7 @@ int myshrc_func(char* cmd){
                         } 
 
                         else{
-                            fprintf(stderr, "Error: Not enough arguments for variable $%d\n", arg_num);
+                            printf("\033[31mNot enough arguements for variable $%d!\033[0m\n", arg_num);
                             return 1;
                         }
 

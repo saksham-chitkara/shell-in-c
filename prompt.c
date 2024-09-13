@@ -34,7 +34,6 @@ void print_red(const char* text) {
 }
 
 void prompt(){
-    
     if(strcmp(home, cwd) == 0){
         printf("\033[36m<%s@%s:~", user_name, sys_name);
     }

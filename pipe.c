@@ -245,70 +245,61 @@
 
 #include "headers.h"
 
-void execute_cmd(char *cmd, int inp_fd, int out_fd){
+void execute_cmd(char *cmd, int inp_fd, int out_fd, int bg){
     char  *tokens[1024];
-
     if(strstr(cmd, ">") || strstr(cmd, ">>") || strstr(cmd, "<")){
-        redirect(cmd, true, inp_fd, out_fd);
+        redirect(cmd, true, inp_fd, out_fd, bg);
         return;
     }
 
-    // while(*cmd == ' ') cmd++;
-    // char *end = cmd + strlen(cmd) - 1;
-    // while(end > cmd && *end == ' '){
-    //     end--;
-    // }
-    // *(end + 1) = '\0';
+    while(*cmd == ' ') cmd++;
+    char *end = cmd + strlen(cmd) - 1;
+    while(end > cmd && *end == ' '){
+        end--;
+    }
+    *(end + 1) = '\0';
     
-    // int i = 0;
-    // int len = strlen(cmd);
-    // bool consider = true;
-    // int token_cnt = 0;
-    // int j = 0;
+    int i = 0;
+    int len = strlen(cmd);
+    bool consider = true;
+    int token_cnt = 0;
+    int j = 0;
 
-    // //sed mein error ara kyuki quotes mein space ko delimitor manra
-    // //isliye ab yeh krna pdega
+    char orig[1024];
+    strcpy(orig, cmd);
+    //sed mein error ara kyuki quotes mein space ko delimitor manra
+    //isliye ab yeh krna pdega
 
-    // while(i < len){
-    //     if(cmd[i] == '\'' || cmd[i] == '"') consider = !consider;
+    while(i < len){
+        if(cmd[i] == '\'' || cmd[i] == '"') consider = !consider;
 
-    //     if(cmd[i + 1] == '\0' || cmd[i] == ' ' && consider){
-    //         if(cmd[i + 1] == '\0'){
-    //             i++;
-    //             cmd[i] = '\0';
-    //         }
+        if(cmd[i + 1] == '\0' || cmd[i] == ' ' && consider){
+            if(cmd[i + 1] == '\0'){
+                i++;
+                cmd[i] = '\0';
+            }
 
-    //         else cmd[i] = '\0';
+            else cmd[i] = '\0';
         
 
-    //         char* next = cmd + j;
+            char* next = cmd + j;
 
-    //         //remove quotes from ends
-    //         if(next[0] == '\'' && next[strlen(next) - 1] == '\'' || next[0] == '"' && next[strlen(next) - 1] == '"'){
-    //             next[strlen(next) - 1] = '\0';
-    //             next++;
-    //         }
+            //remove quotes from ends
+            if(next[0] == '\'' && next[strlen(next) - 1] == '\'' || next[0] == '"' && next[strlen(next) - 1] == '"'){
+                next[strlen(next) - 1] = '\0';
+                next++;
+            }
 
-    //         printf("%s\n", next);
-    //          if(strlen(next))
-    //              tokens[token_cnt++] = next;
-    //         j = i + 1;
-    //     }
-    //     i++;
-    // }
+            // printf("%s\n", next);
+            if(strlen(next))
+                tokens[token_cnt++] = next;
+            j = i + 1;
+        }
+        i++;
+    }
    
-    // tokens[token_cnt] = NULL;
+    tokens[token_cnt] = NULL;
 
-
-
-
-
-
-    //
-    //
-    // MOVED QUOTES HANDLING TO BGFG.C
-    //
-    //
 
     int pid = fork();
     if(pid < 0){
@@ -327,22 +318,27 @@ void execute_cmd(char *cmd, int inp_fd, int out_fd){
 
         if(out_fd != 1){
             dup2(out_fd, 1);  
-            close(out_fd);    
+            close(out_fd);   
         }
 
-        // if(strcmp(tokens[0], "log") == 0){
-        //     get_all();
-        // }
+        if(bg){
+            setup_sigchld_handler();
+            execute(orig, 1);
+        }
 
-        // else{// Execute the command
-        //     execvp(tokens[0], tokens);
-        //     perror("execvp");  // This only runs if execvp fails
-        //     exit(1);
-        // }
+        else if(distribute(orig)){
+            
+        }
+
+        else{
+            execvp(tokens[0], tokens);
+            perror("execvp");  
+            exit(1);
+        }
 
     
         // fprintf(stderr, "%s..\n", concatenated_args);
-        tokenise(cmd);
+        // tokenise(cmd);
 
         dup2(inp_store, 1);
         dup2(out_store, 0);
@@ -353,11 +349,19 @@ void execute_cmd(char *cmd, int inp_fd, int out_fd){
     else{
         int status;
         waitpid(pid, &status, 0);
+
+        read_dir_from_file(prev_dir, "pwd.txt");
+        read_dir_from_file(cwd, "cwd.txt");
+
+        if(chdir(cwd) == -1){
+            perror("chdir!");
+        }
     }
     
 }
 
-void handle_pipes(char *cmd){
+void handle_pipes(char *cmd, int last_bg){
+    setup_sigchld_handler();
     char *cmds[1024];
     
     int num_pipes = 0;
@@ -376,7 +380,7 @@ void handle_pipes(char *cmd){
     }
 
     if(arg_cnt != num_pipes + 1){
-        printf("Invalid use of pipe\n");
+        printf("\033[31mInvalid use of pipe!\033[0m\n");
         return;
     }
 
@@ -398,7 +402,10 @@ void handle_pipes(char *cmd){
     for(int i = 0; i < arg_cnt; i++){
         int out_fd = (i == arg_cnt - 1) ? 1 : pipefds[i * 2 + 1];
 
-        execute_cmd(cmds[i], inp_fd, out_fd);
+        if(last_bg && i == arg_cnt - 1)
+            execute_cmd(cmds[i], inp_fd, out_fd, 1);
+        else 
+            execute_cmd(cmds[i], inp_fd, out_fd, 0);
 
         if(inp_fd != 0) close(inp_fd);
         if(out_fd != 1) close(out_fd);
@@ -410,7 +417,3 @@ void handle_pipes(char *cmd){
     
     return;
 }
-
-
-
-

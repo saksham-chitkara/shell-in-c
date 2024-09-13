@@ -42,7 +42,7 @@ void proclore(char* cmd){
 
 
     //ek hi line h naki 52 lines
-    fscanf(status_file, "%d %*s %c %*d %d %*d %*d %d %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %lu", &pid, &state, &pgrp, &tgpid, &vsize);
+    fscanf(status_file, "%d %*s %c %*d %d %*d %*d %d %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %lu", &pid, &state, &pgrp, &tgpid, &vsize);
 
     char exec_path[1024];
     snprintf(status_file_path, sizeof(status_file_path), "/proc/%d/exe", pid);  //reuse
@@ -58,7 +58,7 @@ void proclore(char* cmd){
     }
 
     printf("pid : %d\n", pid);
-    if(pgrp == tgpid){
+    if(pgrp == tgpid && !hmfind(pid)){
         // printf("process status : %s+\n", state); //for foreground
         if(state == 'Z') printf("process status : %c\n", state);
         else printf("process status : %c+\n", state); //for foreground

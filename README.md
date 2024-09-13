@@ -56,19 +56,49 @@ it will check old pwd which will be ~
 * Assumed maximum matches of file/directory name to be 4096
 * Assumed that we have to not search in hidden folders
 
+### Spec9:
+* Files: alias.c and alias.h
+* I have implemented alias functions without the "func" keyword in .myshrc
+* Alias is stored in log instad of original command
+* I have assumed that to write an alias function in .myshrc the format should be:<br>
+ func_name () { <br>
+    }
+
+* In "$i",  i should be a number ("@" is not allowed)
+
+### Spec 10:
+* Files: redirection.c and redirection.h
+* q21 : assumed that the I/O redirection is used only at the end of the command and all its parameters.
+
+### Spec 11:
+* Files: pipe.c and pipe.h
+* if & applied at last of the pipe only the command preceding it will run in background.
+* echo "Hello World" > file.txt & | wc : (For such case my shell will execute sequentially from left to right untill error occurs i.e echo will work in bg and then error comes due to syntax "& | ").
+* hop .. | wc will go to parent dir and wc will also work
+
+
+### Spec 12:
+* Files: pipe.c and pipe.h
+* ifelse.c and ifelse.h used for both piping and redirection
 
 ### Spec13 : 
-* readme mein likhde ki pure pipe ko bg krunga aur termination msg mein phle command ka naam ayga
+* Files : activities.c and activities.h
+* I am displaying full command. Eg : sleep 10
 
-echo "Hello World" > file.txt & | wc 
-isme phla to execute hora usse bhi roku kya?
+### Spec14:
+* Files : ping.c and ping.h
+* When we do ctrl+D and background processes exit, i am not printing the termination message for them.
 
+### Spec15 :
+* Files: bg.c and bg.h
+* When a bg process will become fg and it runs more than 2 seconds then in next prompt fg will be displayed as the command name.
 
 ### Spec16 :
 * Files: neonate.c and neonate.h
-* Assumption : When neonate -n t(seconds) is given as a command, the first print will happen after t seconds.
+* Assumption : Ctrl-C interrupt wont have any effect on neonate process. It can only be stopped by pressing 'x'.
 
-
+### Spec17 :
+* Files: iman.c iman.h
 
 
 

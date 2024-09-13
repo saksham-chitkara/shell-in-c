@@ -111,7 +111,6 @@ void exec(int index){
 }
 
 void get_all(){
-    fprintf(stderr, "in log\n");
     int tot_lines = cmd_cnt();  
     if(tot_lines == 0){
         printf("\033[31mNo history available!\033[0m\n");
@@ -145,7 +144,6 @@ void get_all(){
 
     free(file_path);
     fclose(file);
-    fprintf(stderr, "in log2\n");
 }
 
 void write_all(int total_cmds){

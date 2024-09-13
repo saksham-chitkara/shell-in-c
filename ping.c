@@ -14,7 +14,7 @@ void ping(char* cmd){
     }
 
     if(i != 2){
-        printf("Give valid arguements!\n");
+        printf("\033[31mGive valid arguements!\033[0m\n");
         return;
     }
 
@@ -25,30 +25,31 @@ void ping(char* cmd){
 
     if(kill(pid, sig_num) == -1){
         if(errno == ESRCH){
-            printf("No such process found\n");
+            printf("\033[31mNo such process found!\033[0m\n");
         } 
 
         else{
-            perror("Error sending signal");
+            printf("\033[31mError sending signal!\033[0m\n");
         }
     } 
 
     else{
         printf("Sent signal %d to process with pid %d\n", sig_num, pid);
     }
+
+    return;
 }
 
 void ctrlC_handler(int signum){
     if(fg_pid != -1 && fg_name){
         kill(fg_pid, SIGINT);
+        fg_pid = -1;
     }
     printf("\n");
 }
 
 void ctrlZ_handler(int signum){
-    // printf("...");
 
-    // printf("%d\n", fg_pid);
     if(fg_pid != -1 && fg_name){
         // printf("ctrlZ_ pressed\n");
         hmInsert(obj, fg_pid, fg_pname, fg_cmdname);
@@ -56,6 +57,7 @@ void ctrlZ_handler(int signum){
         fg_pid = -1;  // No fg process after stopping
         fg_name = NULL;
     }
+
     printf("\n");
 }
 

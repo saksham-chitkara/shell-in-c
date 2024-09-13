@@ -12,7 +12,7 @@ bool status(int pid){
     snprintf(path, sizeof(path), "/proc/%d/status", pid);
     
     FILE *status_file = fopen(path, "r");
-    if (status_file == NULL) {
+    if(status_file == NULL){
         return false;  
     }
 
@@ -33,7 +33,7 @@ bool status(int pid){
     return stopped;
 }
 
-void activities() {
+void activities(){
     int count = 0;
 
     for(int i = 0; i < size; i++){
@@ -59,7 +59,7 @@ void activities() {
     qsort(processes, count, sizeof(pinfo), compare_process_info);
 
     if(count == 0){
-        printf("No currently running processes!\n");
+        printf("\033[31mNo currently running processes!\033[0m\n");
         return;
     }
     
