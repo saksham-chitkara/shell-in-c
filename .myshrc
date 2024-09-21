@@ -1,0 +1,15 @@
+alias reveall = reveal -l
+alias home = hop ~
+hello = reveal -a
+
+# Functions
+
+mk_hop () {
+    mkdir "$1"  #create dir
+    hop "$1"       
+}
+
+hop_seek () {
+    hop "$1"            
+    seek "$1"       
+}
