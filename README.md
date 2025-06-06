@@ -1,104 +1,185 @@
-## README
+# Custom Shell Implementation
 
-### Spec1 :
+## Project Overview
 
+This project is a custom shell implemented in C, designed to simulate basic shell functionalities and offer several advanced features like process management, I/O redirection, piping, job control, and a custom configuration file. The shell supports built-in commands and handles system signals such as `Ctrl-C`, `Ctrl-Z`, and `Ctrl-D` for process management and shell exit.
+
+## Features
+
+### 1. Prompt:
 * Files: prompt.c and prompt.h
+* Displays username, system name, and current directory
+* Shows time taken by previous foreground processes that ran for more than 2 seconds
 
-### Spec2 :
-
+### 2. Input Processing:
 * Files: input.c and input.h
-* Assumed maximum input length to be 4096
+* Parses input commands with maximum length of 4096 characters
+* Supports multiple commands separated by `;` and background execution with `&`
 
-### Spec3 :
-
+### 3. Directory Navigation (`hop`):
 * Files: hop.c and hop.h
-* Assumed that at max 1000 arguements to hop and max length of each is 4096
-* In case of multiple arguements, everything is executed till the first wrong arguement
-* if hop test - is executed in ~ then after command also it will remain in ~ as i have taken that first it will hop to test and then for '-'
-it will check old pwd which will be ~
-* if hop - is executed and no previous diirectory is set, the error "OLDPWD is not set" is printed.
+* Custom implementation of the `cd` command
+* Supports navigation with:
+  * `~` (home directory)
+  * `..` (parent directory)
+  * `-` (previous directory)
+* Handles up to 1000 arguments
+* Executes commands until the first invalid argument
+* If hop - is executed and no previous directory is set, the error "OLDPWD is not set" is printed
 
-### Spec4 :
-
+### 4. File Listing (`reveal`):
 * Files: reveal.c and reveal.h
-* Assumed max number of files in a directory to be 4096
-* for Q22 : if reveal - is executed and no previous diirectory is set, the error "OLDPWD is not set" is printed.
-* for Q23 : only the name of the file/directory/symlink/… is colored in "reveal -l"
+* Lists files and directories in lexicographic order
+* Supports flags `-a` (show hidden files) and `-l` (detailed information)
+* Color-coded output: blue for directories, green for executables, white for regular files
+* Handles up to 4096 files in a directory
+* If reveal - is executed and no previous directory is set, the error "OLDPWD is not set" is printed
+* Only the name of the file/directory/symlink/etc is colored in "reveal -l"
 
-### Spec5 :
-
+### 5. Command History (`log`):
 * Files: log.c and log.h
-* Storing erroneous commands also
-* Creating a file log.txt and storing commands in it to track commands along all sessions
-* For log execute I only add it to history if the command is not exactly same as the latest one.
-* if the input consists only of spaces , then it is not stored in history
+* Maintains history of commands across sessions
+* Stores commands in log.txt for persistence
+* Prevents duplicate consecutive entries
+* Ignores inputs containing only spaces
+* Commands:
+  * `log`: Display command history
+  * `log purge`: Clear history
+  * `log execute <index>`: Execute a command from history
 
-### Spec6 :
-
+### 6. Process Management:
 * Files: bgfg.c and bgfg.h
-* I am only checking if the LATEST foreground process(of built-in commands) is taking more than 2 seconds for execution or not
-* for Q5 : if sleep 3; sleep 5 the latest foreground process is sleep 5 and i will only consider that and print sleep 5 in next prompt
-* for Q6 : for erroneous commands (background) also pid and the message of completion is printed
-* for Q14 : as it is mentioned that it wont be tested so i am not handling this case
-* I have made a hashmap for storing the pids and name of the process
-* If latest foreground process takes more than 2 seconds we will display it in prompt and if we just do enter it wont disappear untill we type any command
+* Tracks foreground and background processes
+* Reports time taken by foreground processes running longer than 2 seconds
+* Uses a hashmap to store process IDs and names
+* Displays completion messages for background processes
+* Only considers the latest foreground process for time reporting
 
-### Spec7 :
-
+### 7. Process Information (`proclore`):
 * Files: proclore.c and proclore.h
-* Units of virtual memory size is bytes
-* Some processes for which executable path cant be obtained, for them only path wont be printed. Rest info will be printed.
+* Displays detailed information about processes:
+  * PID
+  * Process status (Running/Stopped)
+  * Process group
+  * Virtual memory usage (in bytes)
+  * Executable path (when available)
 
-### Spec8 :
-
+### 8. File Search (`seek`):
 * Files: seek.c and seek.h
-* for Q9: " seek file_name - " will search in the old pwd
-* Assumed maximum matches of file/directory name to be 4096
-* Assumed that we have to not search in hidden folders
+* Searches for files and directories within a specified directory
+* Supports flags:
+  * `-d`: Search only directories
+  * `-f`: Search only files
+  * `-e`: Execute or open matching files/directories
+* Color-coded output (green for files, blue for directories)
+* Does not search in hidden folders
 
-### Spec9:
+### 9. Custom Configuration:
 * Files: alias.c and alias.h
-* I have implemented alias functions without the "func" keyword in .myshrc
-* Alias is stored in log instad of original command
-* I have assumed that to write an alias function in .myshrc the format should be:<br>
- func_name () { <br>
-    }
+* Reads configuration from `.myshrc` file
+* Supports aliases and custom functions
+* Aliases are stored in history instead of original commands
 
-* In "$i",  i should be a number ("@" is not allowed)
-
-### Spec 10:
+### 10. I/O Redirection:
 * Files: redirection.c and redirection.h
-* q21 : assumed that the I/O redirection is used only at the end of the command and all its parameters.
+* Supports:
+  * `>`: Output redirection
+  * `>>`: Append output
+  * `<`: Input redirection
+* Assumes redirection operators appear at the end of commands and parameters
 
-### Spec 11:
-* Files: pipe.c and pipe.h
-* if & applied at last of the pipe only the command preceding it will run in background.
-* echo "Hello World" > file.txt & | wc : (For such case my shell will execute sequentially from left to right untill error occurs i.e echo will work in bg and then error comes due to syntax "& | ").
-* hop .. | wc will go to parent dir and wc will also work
+### 11. Command Piping:
+* Files: pipe.c, pipe.h, ifelse.c, ifelse.h
+* Supports chaining commands with pipes (`|`)
+* Handles multiple pipes
+* Background execution with `&` at the end affects only the preceding command
+* Built-in commands work properly with pipes (e.g., `hop .. | wc`)
 
+### 12. Background Process Monitoring (`activities`):
+* Files: activities.c and activities.h
+* Lists all active background processes
+* Shows full command, PID, and state (Running/Stopped)
 
-### Spec 12:
-* Files: pipe.c and pipe.h
-* ifelse.c and ifelse.h used for both piping and redirection
+### 13. Signal Handling and Process Control:
+* Files: ping.c and ping.h
+* Supports sending signals to processes with `ping <pid> <signal_number>`
+* Handles:
+  * Ctrl+C: Interrupts foreground process
+  * Ctrl+Z: Stops foreground process and moves it to background
+  * Ctrl+D: Exits the shell
+* Does not print termination messages for background processes after Ctrl+D
 
-### Spec13 : 
-* Files : activities.c and activities.h
-* I am displaying full command. Eg : sleep 10
-
-### Spec14:
-* Files : ping.c and ping.h
-* When we do ctrl+D and background processes exit, i am not printing the termination message for them.
-
-### Spec15 :
+### 14. Job Control:
 * Files: bg.c and bg.h
-* When a bg process will become fg and it runs more than 2 seconds then in next prompt fg will be displayed as the command name.
+* `bg <pid>`: Continues a stopped background process
+* `fg <pid>`: Brings a background process to foreground
+* When a background process is brought to foreground and runs for more than 2 seconds, its name is displayed in the next prompt
 
-### Spec16 :
+### 15. Latest Process ID Monitor (`neonate`):
 * Files: neonate.c and neonate.h
-* Assumption : Ctrl-C interrupt wont have any effect on neonate process. It can only be stopped by pressing 'x'.
+* Periodically displays the most recently created process ID
+* Command format: `neonate -n [time]` where time is the interval in seconds
+* Can only be stopped by pressing 'x' (exits the shell)
+* Ctrl+C interrupt does not affect the neonate process
 
-### Spec17 :
-* Files: iman.c iman.h
+### 16. Interactive Manual Pages (`iMan`):
+* Files: iman.c and iman.h
+* Fetches and displays manual pages from an online source
+
+## Usage
+
+### Built-in Commands
+
+- **hop [directory]**: Changes the current directory to the specified path. Supports `~`, `..`, and `-`.
+- **reveal [directory] [-a] [-l]**: Lists the contents of the specified directory with optional flags for hidden files and detailed view.
+- **log**: Displays the command history.
+  - `log purge`: Clears the command history.
+  - `log execute <index>`: Executes the command at the specified index in the history.
+- **proclore [pid]**: Displays detailed information about the specified process.
+- **seek [target] [-d] [-f] [-e]**: Searches for directories, files, or executables based on the flags.
+- **ping <pid> <signal_number>**: Sends a signal to the process with the specified PID.
+- **fg <pid>**: Brings the specified background process to the foreground.
+- **bg <pid>**: Continues a stopped background process.
+- **activities**: Lists all background processes started by the shell.
+- **neonate -n [time]**: Displays the latest process ID every [time] seconds. Press 'x' to stop and log out of the shell.
+- **iMan <command>**: Fetches and displays manual pages for the specified command.
+
+### I/O Redirection
+
+- Use `>` to redirect output to a file.
+- Use `>>` to append output to a file.
+- Use `<` to read input from a file.
+
+### Piping
+
+- Chain commands using `|`. The output of one command becomes the input for the next.
+
+### Signals
+
+- **Ctrl-C**: Interrupt the current foreground process.
+- **Ctrl-D**: Exit the shell with the message "Logging Out...".
+- **Ctrl-Z**: Stop the foreground process and move it to the background.
+
+## Building and Running
+
+The project includes a Makefile with the following commands:
+
+- **Build the shell**:
+  ```bash
+  make
+  ```
+
+- **Run the shell**:
+  ```bash
+  ./a.out
+  ```
+
+- **Clean build files**:
+  ```bash
+  make clean
+  ```
+
+
 
 
 
